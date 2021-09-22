@@ -18,8 +18,7 @@
 
 namespace atkwp\helpers;
 
-use atk4\core\ConfigTrait;
-
+use Atk4\Core\ConfigTrait;
 class Config
 {
     use ConfigTrait {

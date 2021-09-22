@@ -18,11 +18,12 @@
 
 namespace atkwp;
 
-class AtkWpView extends \atk4\ui\View
+class AtkWpView extends \Atk4\Ui\View
 {
     /** @var AtkWpApp */
     public $app;
-
+    
+    
     /**
      * Return the plugin running this view.
      *

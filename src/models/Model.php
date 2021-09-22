@@ -19,7 +19,7 @@ namespace atkwp\models;
 
 use atkwp\helpers\WpUtil;
 
-class Model extends \atk4\data\Model
+class Model extends \Atk4\Data\Model
 {
     public $wp_table;
 

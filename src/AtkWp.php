@@ -17,9 +17,9 @@
 
 namespace atkwp;
 
-use atk4\data\Persistence\SQL;
-use atk4\ui\Exception;
-use atk4\ui\Persistence\UI;
+use Atk4\Data\Persistence\SQL;
+use Atk4\Ui\Exception;
+//use atk4\ui\Persistence\UI;
 use atkwp\helpers\Config;
 use atkwp\interfaces\ComponentCtrlInterface;
 use atkwp\interfaces\PathInterface;
@@ -42,6 +42,7 @@ class AtkWp
     public $componentCtrl;
 
     //wp default layout template.
+    //public $defaultLayout = __DIR__.'/../templates/layout.html';
     public $defaultLayout = 'layout.html';
 
     /**
@@ -193,11 +194,11 @@ class AtkWp
      *
      * @param UI $persistence
      */
-    public function setAppUiPersistence(UI $persistence)
+    public function setAppUiPersistence(\Atk4\Ui\Persistence\Ui $persistence)
     {
         $this->app->ui_persistence = $persistence;
     }
-
+   
     /**
      * Return a path to a template location.
      *
@@ -228,7 +229,8 @@ class AtkWp
     public function setDbConnection()
     {
         $dsn = 'mysql:host='.DB_HOST.';dbname='.DB_NAME;
-        $this->dbConnection = new SQL($dsn, DB_USER, DB_PASSWORD);
+        $this->dbConnection =  new \Atk4\Data\Persistence\Sql($dsn, DB_USER, DB_PASSWORD);
+        
     }
 
     /**
@@ -248,6 +250,13 @@ class AtkWp
      */
     public function getComponentCount()
     {
+        if (isset($this->componentCtrl))
+        {
+            if (isset($this->componentCtrl->components['shortcode']))
+            {
+                return count($this->componentCtrl->components['shortcode']);
+            }
+        }
         return $this->componentCount;
     }
 
@@ -279,6 +288,7 @@ class AtkWp
     public function initApp()
     {
         $this->app = new AtkWpApp($this);
+        $this->app->invokeInit();
     }
 
     /**
@@ -333,29 +343,31 @@ class AtkWp
      */
     public function caughtException(Throwable $exception)
     {
+        //$view = $this->newAtkAppView(__DIR__.'/../templates/layout.html', $this->pluginName);
         $view = $this->newAtkAppView('layout.html', $this->pluginName);
 
         switch (true) {
 
-            case $exception instanceof \atk4\core\Exception:
+            case $exception instanceof \Atk4\Core\Exception:
                 $view->template->setHTML('Content', $exception->getHTML());
                 break;
 
             default:
-                $view->add(['Message', get_class($exception).': '.$exception->getMessage().' (in '.$exception->getFile().':'.$exception->getLine().')', 'error']);
-                $view->add(['Text', nl2br($exception->getTraceAsString())]);
+                $view->add(new \Atk4\Ui\Message([get_class($exception).': '.$exception->getMessage().' (in '.$exception->getFile().':'.$exception->getLine().')', 'error']));
+                $view->add(new \Atk4\Ui\Text([nl2br($exception->getTraceAsString())]));
                 break;
         }
 
         $view->template->tryDel('Header');
 
         if ($this->ajaxMode) {
-            $view->app->outputResponseJSON([
+            $view->getApp()->outputResponseJSON([
                 'success'   => false,
-                'message'   => $view->app->wpHtml->getHTML(),
+                //'message'   => $view->getApp()->wpHtml->getHTML(),
+                'message'   => $view->getHtml(),
             ]);
         } else {
-            $view->app->execute(false);
+            $view->getApp()->execute(false);
         }
     }
 
@@ -393,7 +405,9 @@ class AtkWp
         $this->activateLoader();
 
         $this->ajaxMode = true;
-        if ($request = @$_REQUEST['atkwp']) {
+        //if ($request = @$_REQUEST['atkwp']) { unreadable code and doesn't really speed things up
+        if (isset($_REQUEST['atkwp'])) {
+            $request = $_REQUEST['atkwp'];
             $this->wpComponent = $this->componentCtrl->searchComponentByKey($request);
         }
 
@@ -403,6 +417,14 @@ class AtkWp
         // and adjust name accordingly.
         if ($count = $_REQUEST['atkwp-count'] ?? null) {
             $name = $this->pluginName.'-'.$count;
+        }
+        
+        if (isset($_REQUEST['__atk_reload'])) // have to deal with possibility of two or more shortcodes on the same page
+        {
+            $splitLabel = preg_split('/'.$this->pluginName.'/', $_REQUEST['__atk_reload']);
+            $res = preg_replace("/[^0-9]/", "", $splitLabel[1]);
+            if ($count && $count != $res)
+                $name = $this->pluginName.'-'.$res;
         }
 
         try {

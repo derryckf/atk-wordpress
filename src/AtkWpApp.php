@@ -17,15 +17,13 @@
 
 namespace atkwp;
 
-use atk4\ui\App;
-use atk4\ui\Exception;
-use atk4\ui\Persistence\UI;
-use atk4\ui\Template;
+use Atk4\Ui\App;
+use Atk4\Ui\Exception;
 use atkwp\helpers\WpUtil;
 
 class AtkWpApp extends App
 {
-    use \atk4\core\SessionTrait;
+    use \Atk4\Core\SessionTrait;
 
     /**
      * The plugin running this app.
@@ -40,6 +38,8 @@ class AtkWpApp extends App
      * @var AtkWpView
      */
     public $wpHtml;
+    
+    public $layout ='';
 
     /**
      * The maximum number of letter of atk element name.
@@ -58,9 +58,20 @@ class AtkWpApp extends App
     /**
      * atk view initialisation.
      */
-    public function init()
+    protected function init() :void
     {
         parent::init();
+     
+        $this->addMethod('getViewJS', static function ($m, $actions) {
+                                                if (!$actions) {
+                                                    return '';
+                                                }
+
+                                                $actions['indent'] = '';
+                                                $ready = new \Atk4\Ui\JsFunction(['$'], $actions);
+                                                return "<script>jQuery(document).ready({$ready->jsRender()})</script>";
+                                            });
+
     }
 
     /**
@@ -69,11 +80,13 @@ class AtkWpApp extends App
      * @param AtkWp|null $plugin
      * @param UI|null    $ui_persistence
      */
-    public function __construct(AtkWp $plugin = null, ?UI $ui_persistence = null)
+    public function __construct(AtkWp $plugin = null, ?\Atk4\Ui\Persistence\Ui $ui_persistence = null)
     {
+        $this->setApp($this);
         $this->plugin = $plugin;
-        if (!isset($ui_persistence)) {
-            $this->ui_persistence = new UI();
+        
+         if (!isset($ui_persistence)) {    
+            $this->ui_persistence = new \Atk4\Ui\Persistence\Ui();
         } else {
             $this->ui_persistence = $ui_persistence;
         }
@@ -92,13 +105,15 @@ class AtkWpApp extends App
      */
     public function initWpLayout(AtkWpView $view, $layout, $name)
     {
-        $this->wpHtml = new AtkWpView(['defaultTemplate' => $layout, 'name' => $name]);
-        $this->wpHtml->app = $this;
-        $this->wpHtml->init();
-
-        $this->wpHtml->add($view);
-
+        //if (!$this->html) {
+            $this->wpHtml = new AtkWpView(['defaultTemplate' => $layout, 'name' => $name]);
+            $this->wpHtml->setApp($this);
+            $this->wpHtml->invokeInit();
+            $this->wpHtml->add($view);
+        //}
+        
         return $view;
+        //return $this->wpHtml;
     }
 
     /**
@@ -127,7 +142,7 @@ class AtkWpApp extends App
         $this->hook('beforeRender');
         $this->is_rendering = true;
         $this->wpHtml->renderAll();
-        $this->wpHtml->template->appendHTML('HEAD', $this->getJsReady($this->wpHtml));
+        $this->wpHtml->template->dangerouslyAppendHtml('HEAD', $this->getJsReady($this->wpHtml));
         $this->is_rendering = false;
         $this->hook('beforeOutput');
 
@@ -177,36 +192,42 @@ class AtkWpApp extends App
      *
      * @return array|null|string
      */
-    public function jsUrl($page = [], $hasRequestUri = false, $extraArgs = [])
+    public function jsUrl($page = [], $needRequestUri = false, $extraRequestUriArgs = [])
+    //public function jsUrl($page = [], $hasRequestUri = false, $extraArgs = [])
     {
+        // append to the end but allow override as per App.php
+        $extraRequestUriArgs = array_merge($extraRequestUriArgs, ['__atk_json' => 1], $extraRequestUriArgs);
+        
         if (is_string($page)) {
             return $page;
         }
 
-        $wpPage = 'admin-ajax';
+        //wpPage = 'admin-ajax';
+        //$wpPage = 'wp-admin/admin-ajax';
+        $wpPage = admin_url( 'admin-ajax' );
 
-        //if running front end set url for ajax.
+        //if running front end set url for ajax. // not certain this works
         if (!WpUtil::isAdmin()) {
             $this->page = WpUtil::getBaseAdminUrl().'admin-ajax';
         }
 
-        $extraArgs['action'] = $this->plugin->getPluginName();
-        $extraArgs['atkwp'] = $this->plugin->getWpComponentId();
+        $extraRequestUriArgs['action'] = $this->plugin->getPluginName();
+        $extraRequestUriArgs['atkwp'] = $this->plugin->getWpComponentId();
 
         if ($this->plugin->getComponentCount() > 0) {
-            $extraArgs['atkwp-count'] = $this->plugin->getComponentCount();
+            $extraRequestUriArgs['atkwp-count'] = $this->plugin->getComponentCount();
         }
 
         if ($this->plugin->config->getConfig('plugin/use_nounce', false)) {
-            $extraArgs['_ajax_nonce'] = helpers\WpUtil::createWpNounce($this->plugin->getPluginName());
+            $extraRequestUriArgs['_ajax_nonce'] = helpers\WpUtil::createWpNounce($this->plugin->getPluginName());
         }
 
         /* Page argument may be forced by using $config['plugin']['use_page_argument'] = true in config-default.php. */
-        if (isset($extraArgs['path']) || $this->plugin->config->getConfig('plugin/use_page_argument', false)) {
-            $extraArgs['page'] = $this->plugin->wpComponent['slug'];
+        if (isset($extraRequestUriArgs['path']) || $this->plugin->config->getConfig('plugin/use_page_argument', false)) {
+            $extraRequestUriArgs['page'] = $this->plugin->wpComponent['slug'];
         }
 
-        return $this->buildUrl($wpPage, $page, $extraArgs);
+        return $this->buildUrl($wpPage, $page, $extraRequestUriArgs);
     }
 
     private function buildUrl($wpPage, $page, $extras)
@@ -283,9 +304,31 @@ class AtkWpApp extends App
         }
 
         $actions['indent'] = '';
-        $ready = new \atk4\ui\jsFunction(['$'], $actions);
-
+        $ready = new \Atk4\Ui\JsFunction(['$'], $actions);
         return "<script>jQuery(document).ready({$ready->jsRender()})</script>";
+        //return "<script></script>";
+    }
+    
+     /**
+     * Return javascript action.*
+     *
+     * @param $app_view
+     *
+     * @throws Exception
+     *
+     * @return string
+     */
+    public function invokeGetViewJS($actions)
+    {
+       
+        if (!$actions) {
+            return '';
+        }
+
+        $actions['indent'] = '';
+        $ready = new \Atk4\Ui\JsFunction(['$'], $actions);
+        return "<script>jQuery(document).ready({$ready->jsRender()})</script>";
+        //return "<script></script>";
     }
 
     /**
@@ -299,8 +342,9 @@ class AtkWpApp extends App
      */
     public function loadTemplate($name)
     {
-        $template = new Template();
-        $template->app = $this;
+        $template = new \Atk4\Ui\Template();
+        //$template->app = $this;
+        $template->setApp($this);
 
         return $template->load($this->plugin->getTemplateLocation($name));
     }

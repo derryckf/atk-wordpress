@@ -30,5 +30,6 @@ class Component extends AtkWpView
      *
      * @var string
      */
+    //public $defaultTemplate =  __DIR__.'/../../templates/component.html';
     public $defaultTemplate = 'component.html';
 }

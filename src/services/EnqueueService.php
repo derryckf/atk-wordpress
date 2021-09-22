@@ -28,9 +28,9 @@ class EnqueueService
      */
     private $ctrl;
 
-    protected $atkUiVersion = '1.6';
-    protected $fomanticUiVersion = '2.6.4';
-
+    protected $atkUiVersion = '3.0.0';
+    protected $fomanticUiVersion = '2.8.7';
+    protected $flatpickrVersion = '4.6.6';
     /**
      * The js files to load.
      *
@@ -198,7 +198,8 @@ class EnqueueService
     {
         if ($shortcode['atk']) {
             $this->enqueueJsInclude(['atkjs-ui']);
-            $this->enqueueCssInclude(['semantic', 'semantic-calendar']);
+            //$this->enqueueCssInclude(['semantic', 'semantic-calendar']);
+            $this->enqueueCssInclude(['fomantic', 'atkjs-ui']);
         }
 
         if (!empty($jsFiles)) {
@@ -245,12 +246,50 @@ class EnqueueService
      */
     protected function registerAtkWpFiles()
     {
+      
+        wp_register_script(
+            'jQuery',
+            "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js",
+            [],
+            null,
+            true
+        );
+            
         wp_register_script(
             'fomantic',
-            "{$this->atkWpAssetsUrl}/vendor/fomantic/{$this->fomanticUiVersion}/semantic.min.js",
+            //"{$this->atkWpAssetsUrl}/vendor/fomantic/{$this->fomanticUiVersion}/semantic.min.js",
+            //2.8.7/semantic.min.js
+            "https://cdnjs.cloudflare.com/ajax/libs/fomantic-ui/{$this->fomanticUiVersion}/semantic.min.js",
             [],
             $this->fomanticUiVersion,
             true
+        );
+            
+        wp_register_style(
+            'fomantic',
+            //"{$this->atkWpAssetsUrl}/vendor/fomantic/{$this->fomanticUiVersion}/semantic.min.js",
+            //https://cdnjs.cloudflare.com/ajax/libs/fomantic-ui/2.8.7/semantic.min.css
+            "https://cdnjs.cloudflare.com/ajax/libs/fomantic-ui/{$this->fomanticUiVersion}/semantic.min.css",
+            [],
+            $this->fomanticUiVersion,
+            false          
+        );
+            
+            
+        wp_register_script(
+            'flatpickr',
+            "https://cdnjs.cloudflare.com/ajax/libs/flatpickr/{$this->flatpickrVersion}/flatpickr.min.js",
+            [],
+            null,
+            true
+        );
+            
+        wp_register_style(
+            'flatpickr',
+            "https://cdnjs.cloudflare.com/ajax/libs/flatpickr/{$this->flatpickrVersion}/flatpickr.min.css",
+            [],
+            null,
+            false
         );
 
         /*
@@ -260,24 +299,30 @@ class EnqueueService
          */
         wp_register_script(
             'atkjs-ui',
-            "{$this->atkWpAssetsUrl}/vendor/atk4/ui/{$this->atkUiVersion}/atkjs-ui.min.js",
+            //"{$this->atkWpAssetsUrl}/vendor/atk4/ui/{$this->atkUiVersion}/atkjs-ui.min.js",
+            //https://raw.githack.com/atk4/ui/3.0.0/public/atkjs-ui.min.js        
+            "https://raw.githack.com/atk4/ui/{$this->atkUiVersion}/public/atkjs-ui.min.js",
             ['jquery-serialize-object', 'fomantic'],
-            $this->atkUiVersion,
+            null,//$this->atkUiVersion,
             true
+            
         );
 
         wp_register_style(
-            'fomantic',
-            "{$this->atkWpAssetsUrl}/vendor/fomantic/{$this->fomanticUiVersion}/semantic.min.css",
-            [],
-            $this->fomanticUiVersion
+            'atkjs-ui',
+            //"{$this->atkWpAssetsUrl}/vendor/fomantic/{$this->fomanticUiVersion}/semantic.min.css",
+            //https://raw.githack.com/atk4/ui/3.0.0/public/agileui.css
+            "https://raw.githack.com/atk4/ui/{$this->atkUiVersion}/public/agileui.css",
+            ['fomantic'],
+            null,//$this->atkUiVersion,
+            false
         );
 
         // Admin section css fix for certain semantic ui element.
         wp_register_style(
             'atk-wp',
             "{$this->atkWpAssetsUrl}/css/atk-wordpress.css",
-            ['fomantic'],
+            ['jQuery' ,'fomantic'],
             null
         );
     }

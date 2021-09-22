@@ -17,9 +17,9 @@
 
 namespace atkwp\ui;
 
-use atk4\ui\FormField\Generic;
-use atk4\ui\Template;
-use atk4\ui\View;
+use Atk4\Ui\Form;
+//use Atk4\Ui\Template;
+use Atk4\Ui\View;
 
 class WpInput extends Generic
 {

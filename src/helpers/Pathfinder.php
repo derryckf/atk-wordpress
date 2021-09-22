@@ -134,8 +134,8 @@ class Pathfinder implements PathInterface
             }
         }
 
-        throw new \atk4\ui\Exception([
+        throw new \Atk4\Ui\Exception(
             'Unable to get path location for file: '.$fileName,
-        ]);
+        );
     }
 }
