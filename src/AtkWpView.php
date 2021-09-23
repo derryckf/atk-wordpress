@@ -21,7 +21,7 @@ namespace atkwp;
 class AtkWpView extends \Atk4\Ui\View
 {
     /** @var AtkWpApp */
-    public $app;
+    public $app; // not required using scope trait instead
     
     
     /**
@@ -31,7 +31,8 @@ class AtkWpView extends \Atk4\Ui\View
      */
     public function getPluginInstance()
     {
-        return $this->app->plugin;
+        //return $this->app->plugin;
+        return $this->getApp()->plugin;
     }
 
     /**
@@ -41,6 +42,7 @@ class AtkWpView extends \Atk4\Ui\View
      */
     public function getDbConnection()
     {
-        return $this->app->plugin->getDbConnection();
+        //return $this->app->plugin->getDbConnection();
+        return $this->getApp()->plugin->getDbConnection();
     }
 }

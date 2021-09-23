@@ -279,10 +279,14 @@ class AtkWp
         //register ajax action for this plugin
         add_action("wp_ajax_{$this->getPluginName()}", [$this, 'wpAjaxExecute']);
 
+        
         if ($this->config->getConfig('plugin/use_ajax_front', false)) {
             //enable Wp ajax front end action.
             add_action("wp_ajax_nopriv_{$this->getPluginName()}", [$this, 'wpAjaxExecute']);
         }
+        
+        //register post back action for this plugin
+        add_action("admin_post_{$this->getPluginName()}", [$this, 'wpPostExecute']);
     }
 
     public function initApp()
@@ -416,10 +420,14 @@ class AtkWp
         // check if this component has been output more than once
         // and adjust name accordingly.
         if ($count = $_REQUEST['atkwp-count'] ?? null) {
-            $name = $this->pluginName.'-'.$count;
+            //$name = $this->pluginName.'-'.$count;
+            /* since this was used mainly to hande shortcode
+             * have opted to use the code below to detect mutliple 
+             * instances of shortcode, but it still needs more testing
+            */
         }
         
-        if (isset($_REQUEST['__atk_reload'])) // have to deal with possibility of two or more shortcodes on the same page
+        if (isset($_REQUEST['__atk_reload']) && $this->wpComponent['type'] == 'shortcode') // have to deal with possibility of two or more shortcodes on the same page
         {
             $splitLabel = preg_split('/'.$this->pluginName.'/', $_REQUEST['__atk_reload']);
             $res = preg_replace("/[^0-9]/", "", $splitLabel[1]);
@@ -427,6 +435,37 @@ class AtkWp
                 $name = $this->pluginName.'-'.$res;
         }
 
+        try {
+            $view = new $this->wpComponent['uses']();
+            $this->app->initWpLayout($view, $this->defaultLayout, $name);
+            $this->app->execute($this->ajaxMode);
+        } catch (Throwable $e) {
+            $this->caughtException($e);
+        }
+        $this->app->callExit();
+    }
+
+     /**
+     * Output post call in Wp.
+     * This is an overall catch post back  request for Wordpress admin.
+     */
+    public function wpPostExecute()
+    {
+        if ($this->config->getConfig('plugin/use_nounce', false)) {
+            check_ajax_referer($this->pluginName);
+        }
+
+        $this->activateLoader();
+        
+        //respond with ajax reply probably the wrong thing todo
+        $this->ajaxMode = true;
+        if (isset($_REQUEST['atkwp'])) {
+            $request = $_REQUEST['atkwp'];
+            $this->wpComponent = $this->componentCtrl->searchComponentByKey($request);
+        }
+
+        $name = $this->pluginName;
+        
         try {
             $view = new $this->wpComponent['uses']();
             $this->app->initWpLayout($view, $this->defaultLayout, $name);

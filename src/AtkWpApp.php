@@ -19,6 +19,8 @@ namespace atkwp;
 
 use Atk4\Ui\App;
 use Atk4\Ui\Exception;
+use Atk4\Core\Factory;
+use Atk4\Ui\UserAction\ExecutorFactory;
 use atkwp\helpers\WpUtil;
 
 class AtkWpApp extends App
@@ -90,7 +92,10 @@ class AtkWpApp extends App
         } else {
             $this->ui_persistence = $ui_persistence;
         }
+        // setting up default executor factory.
+        $this->executorFactory = Factory::factory([ExecutorFactory::class]);
     }
+
 
     /**
      * The layout initialisation for each Wp component.
@@ -107,13 +112,17 @@ class AtkWpApp extends App
     {
         //if (!$this->html) {
             $this->wpHtml = new AtkWpView(['defaultTemplate' => $layout, 'name' => $name]);
+            if (!$this->html)
+            {
+                $this->html = $this->wpHtml;
+            }
             $this->wpHtml->setApp($this);
             $this->wpHtml->invokeInit();
             $this->wpHtml->add($view);
-        //}
         
-        return $view;
-        //return $this->wpHtml;
+        
+        //return $view;
+        return $this->wpHtml;
     }
 
     /**
@@ -174,10 +183,19 @@ class AtkWpApp extends App
             return $page;
         }
 
-        $wpPage = 'admin';
+        $wpPage = admin_url( 'admin-post' ); // using admin-post to catch postback
 
         if ($wpPageRequest = @$_REQUEST['page']) {
             $extraArgs['page'] = $wpPageRequest;
+        }
+        
+        // setup action settings for post callback
+        if(isset($extraArgs['__atk_callback']))
+        {
+            //action post parameter to enable wordpress to do the action
+            $extraArgs['action'] = $this->plugin->getPluginName();
+            //atkwp so we can find the component again
+            $extraArgs['atkwp'] = $this->plugin->getWpComponentId();
         }
 
         return $this->buildUrl($wpPage, $page, $extraArgs);
@@ -193,7 +211,6 @@ class AtkWpApp extends App
      * @return array|null|string
      */
     public function jsUrl($page = [], $needRequestUri = false, $extraRequestUriArgs = [])
-    //public function jsUrl($page = [], $hasRequestUri = false, $extraArgs = [])
     {
         // append to the end but allow override as per App.php
         $extraRequestUriArgs = array_merge($extraRequestUriArgs, ['__atk_json' => 1], $extraRequestUriArgs);
@@ -202,11 +219,9 @@ class AtkWpApp extends App
             return $page;
         }
 
-        //wpPage = 'admin-ajax';
-        //$wpPage = 'wp-admin/admin-ajax';
         $wpPage = admin_url( 'admin-ajax' );
 
-        //if running front end set url for ajax. // not certain this works
+        //if running front end set url for ajax. // sf not certain this works
         if (!WpUtil::isAdmin()) {
             $this->page = WpUtil::getBaseAdminUrl().'admin-ajax';
         }
@@ -306,7 +321,6 @@ class AtkWpApp extends App
         $actions['indent'] = '';
         $ready = new \Atk4\Ui\JsFunction(['$'], $actions);
         return "<script>jQuery(document).ready({$ready->jsRender()})</script>";
-        //return "<script></script>";
     }
     
      /**
@@ -328,7 +342,6 @@ class AtkWpApp extends App
         $actions['indent'] = '';
         $ready = new \Atk4\Ui\JsFunction(['$'], $actions);
         return "<script>jQuery(document).ready({$ready->jsRender()})</script>";
-        //return "<script></script>";
     }
 
     /**
@@ -343,7 +356,6 @@ class AtkWpApp extends App
     public function loadTemplate($name)
     {
         $template = new \Atk4\Ui\Template();
-        //$template->app = $this;
         $template->setApp($this);
 
         return $template->load($this->plugin->getTemplateLocation($name));

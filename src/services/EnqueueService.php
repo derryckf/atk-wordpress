@@ -156,6 +156,7 @@ class EnqueueService
 
             //Load our register atk js and css.
             wp_enqueue_script('atkjs-ui');
+            wp_enqueue_style('atkjs-ui');
             wp_enqueue_style('atk-wp');
         }
 
@@ -302,7 +303,7 @@ class EnqueueService
             //"{$this->atkWpAssetsUrl}/vendor/atk4/ui/{$this->atkUiVersion}/atkjs-ui.min.js",
             //https://raw.githack.com/atk4/ui/3.0.0/public/atkjs-ui.min.js        
             "https://raw.githack.com/atk4/ui/{$this->atkUiVersion}/public/atkjs-ui.min.js",
-            ['jquery-serialize-object', 'fomantic'],
+            ['jquery-serialize-object', 'fomantic', 'flatpickr'],
             null,//$this->atkUiVersion,
             true
             
@@ -313,7 +314,7 @@ class EnqueueService
             //"{$this->atkWpAssetsUrl}/vendor/fomantic/{$this->fomanticUiVersion}/semantic.min.css",
             //https://raw.githack.com/atk4/ui/3.0.0/public/agileui.css
             "https://raw.githack.com/atk4/ui/{$this->atkUiVersion}/public/agileui.css",
-            ['fomantic'],
+            ['fomantic', 'flatpickr'],
             null,//$this->atkUiVersion,
             false
         );
@@ -323,7 +324,8 @@ class EnqueueService
             'atk-wp',
             "{$this->atkWpAssetsUrl}/css/atk-wordpress.css",
             ['jQuery' ,'fomantic'],
-            null
+            null,
+            false     
         );
     }
 

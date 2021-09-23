@@ -22,7 +22,7 @@ class Options extends Model
     public $wp_table = 'options';
     public $id_field = 'option_id';
 
-    public function init()
+    protected function init() :void
     {
         parent::init();
 
@@ -64,9 +64,11 @@ class Options extends Model
      */
     public function saveOptionValue($option, $value)
     {
-        $this->tryLoadBy('name', $option);
-        $this->set('value', maybe_serialize($value));
-        $this->set('name', $option);
-        $this->save();
+        $t = $this->tryLoadBy('name', $option);
+        if ($t->loaded()){
+            $t->set('value', maybe_serialize($value));
+            //$t->set('name', $option);
+            $t->save();
+        }
     }
 }

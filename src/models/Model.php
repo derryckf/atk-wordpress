@@ -23,12 +23,12 @@ class Model extends \Atk4\Data\Model
 {
     public $wp_table;
 
-    public function init()
+    protected function init() : void
     {
         if (!empty($this->wp_table)) {
             $this->table = WpUtil::getDbPrefix().$this->wp_table;
         }
 
-        return parent::init();
+        parent::init();
     }
 }
