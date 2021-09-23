@@ -347,7 +347,6 @@ class AtkWp
      */
     public function caughtException(Throwable $exception)
     {
-        //$view = $this->newAtkAppView(__DIR__.'/../templates/layout.html', $this->pluginName);
         $view = $this->newAtkAppView('layout.html', $this->pluginName);
 
         switch (true) {
@@ -427,12 +426,21 @@ class AtkWp
             */
         }
         
-        if (isset($_REQUEST['__atk_reload']) && $this->wpComponent['type'] == 'shortcode') // have to deal with possibility of two or more shortcodes on the same page
+        if (isset($_REQUEST['__atk_reload'])) // have to deal with possibility of two or more shortcodes on the same page
         {
-            $splitLabel = preg_split('/'.$this->pluginName.'/', $_REQUEST['__atk_reload']);
-            $res = preg_replace("/[^0-9]/", "", $splitLabel[1]);
-            if ($count && $count != $res)
-                $name = $this->pluginName.'-'.$res;
+            if (preg_match('/'.$this->pluginName.'-(.*?)_/', $_REQUEST['__atk_reload'], $match) == 1) {
+                 $res = preg_replace("/[^0-9]/", "", $match[1]);
+                if (is_numeric($res))
+                    $name = $this->pluginName.'-'.$res;
+            }   
+        }
+        if (isset($_REQUEST['__atk_callback'])) // have to deal with possibility of two or more shortcodes on the same page
+        {
+            if (preg_match('/'.$this->pluginName.'-(.*?)_/', $_REQUEST['__atk_callback'], $match) == 1) {
+                 $res = preg_replace("/[^0-9]/", "", $match[1]);
+                if (is_numeric($res))
+                    $name = $this->pluginName.'-'.$res;
+            }   
         }
 
         try {

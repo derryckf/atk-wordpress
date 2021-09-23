@@ -212,8 +212,12 @@ class AtkWpApp extends App
      */
     public function jsUrl($page = [], $needRequestUri = false, $extraRequestUriArgs = [])
     {
-        // append to the end but allow override as per App.php
-        $extraRequestUriArgs = array_merge($extraRequestUriArgs, ['__atk_json' => 1], $extraRequestUriArgs);
+        
+        if ( isset($extraRequestUriArgs['__atk_reload']))
+        {
+            // append to the end but allow override as per App.php
+            $extraRequestUriArgs = array_merge($extraRequestUriArgs, ['__atk_json' => 1], $extraRequestUriArgs);
+        }
         
         if (is_string($page)) {
             return $page;
