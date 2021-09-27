@@ -19,8 +19,8 @@
 
 namespace atkwp\interfaces;
 
-use atk4\ui\Exception;
-use atk4\ui\View;
+use Atk4\Ui\Exception;
+use Atk4\Ui\View;
 use atkwp\AtkWpView;
 
 interface WidgetInterface

@@ -18,10 +18,12 @@
 namespace atkwp\ui;
 
 use Atk4\Ui\Form;
-//use Atk4\Ui\Template;
+use Atk4\Core\Translator\Adapter\Generic;
+use Atk4\Ui\Form\Control;
 use Atk4\Ui\View;
+use Atk4\Ui\HtmlTemplate;
 
-class WpInput extends Generic
+class WpInput extends Control//Generic
 {
     /**
      * The input id attr.
@@ -83,7 +85,7 @@ class WpInput extends Generic
      */
     public $placeholder = null;
 
-    public function init()
+    protected function init():void
     {
         parent::init();
         $this->content = $this->label;
@@ -166,7 +168,7 @@ class WpInput extends Generic
             $inputProperties['checked'] = 'checked';
         }
 
-        return $this->app->getTag('input', $inputProperties);
+        return $this->getApp()->getTag('input', $inputProperties);
     }
 
     /**
@@ -174,7 +176,7 @@ class WpInput extends Generic
      *
      * @throws \atk4\ui\Exception
      */
-    public function renderView()
+    public function renderView():void
     {
         switch ($this->css) {
             case 'tiny-text':
@@ -196,7 +198,7 @@ class WpInput extends Generic
             $this->field_id = $this->short_name;
         }
 
-        $input = new View(['template' => new Template('{Input}<input class="{$class}" type="{input_type}text{/}" {$input_attributes}/>{/}')]);
+        $input = new View(['template' => new HtmlTemplate('{Input}<input class="{$class}" type="{input_type}text{/}" {$input_attributes}/>{/}')]);
         $input->template->setHTML('Input', $this->getInput());
         $input->content = null;
 

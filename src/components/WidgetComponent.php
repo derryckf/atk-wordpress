@@ -29,7 +29,7 @@
 
 namespace atkwp\components;
 
-use atk4\ui\Exception;
+use Atk4\Ui\Exception;
 use atkwp\AtkWp;
 
 class WidgetComponent extends \WP_Widget
@@ -108,7 +108,8 @@ class WidgetComponent extends \WP_Widget
             if (!$view) {
                 throw new Exception('Method onWidget() should return the atk view');
             }
-            $view->app->execute();
+            //$view->app->execute();
+            $view->getApp()->execute();
         } catch (Exception $e) {
             $this->plugin->caughtException($e);
         }
@@ -135,7 +136,8 @@ class WidgetComponent extends \WP_Widget
             if (!$view) {
                 throw new Exception('Method onForm() should return the atk view');
             }
-            $view->app->execute();
+            //$view->app->execute();
+            $view->getApp()->execute();
         } catch (Exception $e) {
             $this->plugin->caughtException($e);
         }

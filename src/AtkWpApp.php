@@ -182,6 +182,10 @@ class AtkWpApp extends App
         if (is_string($page)) {
             return $page;
         }
+        
+        if ( ! empty ($page)) {
+            return parent::url($page);
+        }
 
         $wpPage = admin_url( 'admin-post' ); // using admin-post to catch postback
 
@@ -214,6 +218,7 @@ class AtkWpApp extends App
     {
         
         if ( isset($extraRequestUriArgs['__atk_reload']))
+        //if (1)
         {
             // append to the end but allow override as per App.php
             $extraRequestUriArgs = array_merge($extraRequestUriArgs, ['__atk_json' => 1], $extraRequestUriArgs);
