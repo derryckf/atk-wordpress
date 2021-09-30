@@ -364,13 +364,18 @@ class AtkWp
         $view->template->tryDel('Header');
 
         if ($this->ajaxMode) {
-            $view->getApp()->outputResponseJSON([
+            /*
+            $view->renderToJsonArr([
                 'success'   => false,
                 //'message'   => $view->getApp()->wpHtml->getHTML(),
                 'message'   => $view->getHtml(),
             ]);
+             * 
+             */
+            echo $view->getHtml();
+            //echo $view->renderToJsonArr(true);
         } else {
-            $view->getApp()->execute(false);
+            echo $view->render();
         }
     }
 
@@ -416,15 +421,6 @@ class AtkWp
 
         $name = $this->pluginName;
 
-        // check if this component has been output more than once
-        // and adjust name accordingly.
-        if ($count = $_REQUEST['atkwp-count'] ?? null) {
-            //$name = $this->pluginName.'-'.$count;
-            /* since this was used mainly to hande shortcode
-             * have opted to use the code below to detect mutliple 
-             * instances of shortcode, but it still needs more testing
-            */
-        }
         
         if (isset($_REQUEST['__atk_reload'])) // have to deal with possibility of two or more shortcodes on the same page
         {
@@ -432,15 +428,18 @@ class AtkWp
                  $res = preg_replace("/[^0-9]/", "", $match[1]);
                 if (is_numeric($res))
                     $name = $this->pluginName.'-'.$res;
+                    $this->componentCount = $res;
             }   
         }
-        if (isset($_REQUEST['__atk_callback'])) // have to deal with possibility of two or more shortcodes on the same page
-        {
-            if (preg_match('/'.$this->pluginName.'-(.*?)_/', $_REQUEST['__atk_callback'], $match) == 1) {
-                 $res = preg_replace("/[^0-9]/", "", $match[1]);
-                if (is_numeric($res))
-                    $name = $this->pluginName.'-'.$res;
-            }   
+        else {
+            if ($count = $_REQUEST['atkwp-count'] ?? null) {
+                $name = $this->pluginName.'-'.$count;
+                $this->componentCount = $count;
+                /* since this was used mainly to hande shortcode
+                 * have opted to use the code below to detect mutliple 
+                 * instances of shortcode, but it still needs more testing
+                */
+            }
         }
 
         try {
@@ -554,7 +553,8 @@ class AtkWp
             $view = new $this->wpComponent['uses'](['args' => $args]);
             $this->app->initWpLayout($view, $this->defaultLayout, $this->pluginName.'-'.$this->componentCount);
 
-            return $this->app->render(false);
+            //return $this->app->render(false);
+            return $this->app->execute(false);
         } catch (Throwable $e) {
             $this->caughtException($e);
         }

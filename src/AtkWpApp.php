@@ -65,12 +65,14 @@ class AtkWpApp extends App
         parent::init();
      
         $this->addMethod('getViewJS', static function ($m, $actions) {
+                                               
                                                 if (!$actions) {
                                                     return '';
                                                 }
 
                                                 $actions['indent'] = '';
-                                                $ready = new \Atk4\Ui\JsFunction(['$'], $actions);
+                                                //$ready = new \Atk4\Ui\JsFunction(['$'], $actions);
+                                                $ready = new \Atk4\Ui\JsFunction($actions);
                                                 return "<script>jQuery(document).ready({$ready->jsRender()})</script>";
                                             });
 
@@ -110,7 +112,7 @@ class AtkWpApp extends App
      */
     public function initWpLayout(AtkWpView $view, $layout, $name)
     {
-        //if (!$this->html) {
+        if (!$this->wpHtml) {
             $this->wpHtml = new AtkWpView(['defaultTemplate' => $layout, 'name' => $name]);
             if (!$this->html)
             {
@@ -119,10 +121,11 @@ class AtkWpApp extends App
             $this->wpHtml->setApp($this);
             $this->wpHtml->invokeInit();
             $this->wpHtml->add($view);
+        }
         
         
-        //return $view;
-        return $this->wpHtml;
+        return $view;
+        //return $this->wpHtml;
     }
 
     /**
@@ -151,11 +154,26 @@ class AtkWpApp extends App
         $this->hook('beforeRender');
         $this->is_rendering = true;
         $this->wpHtml->renderAll();
+        //$this->wpHtml->render();
         $this->wpHtml->template->dangerouslyAppendHtml('HEAD', $this->getJsReady($this->wpHtml));
+        //$this->wpHtml->template->dangerouslyAppendHtml('HEAD', $this->getJsReady($this->wpHtml));
         $this->is_rendering = false;
         $this->hook('beforeOutput');
+       
+        
 
-        return $this->wpHtml->template->render();
+        if (!$this->exit_called) { // output already send by terminate()
+            if ($this->isJsUrlRequest()) {
+               return $this->wpHtml->renderToJsonArr();
+            } else {
+               return $this->wpHtml->template->renderToHtml(); 
+               //return $this->wpHtml->getHtml();
+            }
+        }
+        //return $this->wpHtml->getHtml();
+        //return $this->wpHtml->template->render();
+        //return $this->wpHtml->render();
+        return "\n" . '!! FATAL UI ERROR: wp Plugin !!' . "\n";
     }
 
     /**
@@ -238,8 +256,15 @@ class AtkWpApp extends App
         $extraRequestUriArgs['action'] = $this->plugin->getPluginName();
         $extraRequestUriArgs['atkwp'] = $this->plugin->getWpComponentId();
 
+        /*
         if ($this->plugin->getComponentCount() > 0) {
             $extraRequestUriArgs['atkwp-count'] = $this->plugin->getComponentCount();
+        }
+         * 
+         */
+        
+        if ($this->plugin->componentCount > 0) {
+            $extraRequestUriArgs['atkwp-count'] = $this->plugin->componentCount;
         }
 
         if ($this->plugin->config->getConfig('plugin/use_nounce', false)) {
@@ -364,9 +389,9 @@ class AtkWpApp extends App
      */
     public function loadTemplate($name)
     {
-        $template = new \Atk4\Ui\Template();
+        $template = new \Atk4\Ui\HtmlTemplate();
         $template->setApp($this);
-
-        return $template->load($this->plugin->getTemplateLocation($name));
+        
+        return $template->loadFromFile($this->plugin->getTemplateLocation($name));
     }
 }

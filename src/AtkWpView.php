@@ -21,7 +21,7 @@ namespace atkwp;
 class AtkWpView extends \Atk4\Ui\View
 {
     /** @var AtkWpApp */
-    public $app; // not required using scope trait instead
+    //public $app; // not required using scope trait instead
     
     
     /**
